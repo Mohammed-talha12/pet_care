@@ -10,6 +10,8 @@ import 'package:pet_care/features/booking/screens/incoming_bookings_screen.dart'
 import 'package:pet_care/features/booking/screens/my_bookings_screen.dart';
 import 'package:pet_care/features/services/screens/availability_screen.dart';
 
+import 'package:pet_care/features/realtime/live_tracking_screen.dart';
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -82,6 +84,24 @@ class HomeScreen extends StatelessWidget {
           subtitle: "Check status of your requests",
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBookingsScreen())),
         ),
+
+_buildMenuCard(
+  context,
+  icon: Icons.location_on,
+  color: Colors.red,
+  title: "Live Tracking",
+  subtitle: "Track your pet in real-time",
+  onTap: () => Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const LiveTrackingScreen(
+        bookingId: '123', // Replace with real booking id later
+      ),
+    ),
+  ),
+),
+
+       
       ],
     );
   }
@@ -118,14 +138,6 @@ class HomeScreen extends StatelessWidget {
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ManageServicesScreen())),
         ),
         // Placeholder for Availability feature
-        _buildMenuCard(
-          context,
-          icon: Icons.event_available,
-          color: Colors.redAccent,
-          title: "Availability",
-          subtitle: "Manage your working calendar",
-          onTap: () {}, // Coming soon in Brick 24
-        ),
         _buildMenuCard(
           context,
           icon: Icons.event_available,
