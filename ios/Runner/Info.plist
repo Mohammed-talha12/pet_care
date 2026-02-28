@@ -66,5 +66,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>This app needs location access for live pet tracking.</string>
+
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>This app needs continuous location access for live pet tracking during services.</string>
+
 </dict>
 </plist>
