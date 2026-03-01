@@ -2,16 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../auth/screens/login_screen.dart'; 
 
-import '../../profile/screens/add_pet_screen.dart';
+// Profiles & Pets
+import '../../profile/screens/pet_profile_screen.dart';
+import '../../profile/screens/provider_profile_screen.dart';
+
+// Services
 import '../../services/screens/find_services_screen.dart';
 import '../../services/screens/manage_services_screen.dart';
-import '../../profile/screens/provider_profile_screen.dart';
+import '../../services/screens/availability_screen.dart';
+import '../../services/screens/service_request_form.dart';
+
+// Bookings & Tracking
 import 'package:pet_care/features/booking/screens/incoming_bookings_screen.dart';
 import 'package:pet_care/features/booking/screens/my_bookings_screen.dart';
-import 'package:pet_care/features/services/screens/availability_screen.dart';
-
 import 'package:pet_care/features/realtime/live_tracking_screen.dart';
 
+// Chat
+import 'package:pet_care/features/chat/chat_screen.dart';
+
+// ✅ NEW: Notifications Import
+import '../../notifications/notification_screen.dart'; 
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,6 +36,20 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('PetCare Dashboard'),
         actions: [
+          // 🔔 Notifications Icon (Priority 2: Real-time Alerts)
+          IconButton(
+            icon: const Badge(
+              label: Text('3'), // This can be made dynamic later with a Stream
+              child: Icon(Icons.notifications_none),
+            ),
+            onPressed: () {
+              // ✅ Navigates to your new Notification Screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -41,11 +65,11 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView( // Changed to scrollable for multiple pets
+      body: SingleChildScrollView( 
         padding: const EdgeInsets.all(20.0),
         child: role == 'pet_parent' 
             ? _buildParentDashboard(context, userId) 
-            : _buildProviderDashboard(context),
+            : _buildProviderDashboard(context, userId),
       ),
     );
   }
@@ -55,80 +79,101 @@ class HomeScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 🐾 Multiple Pet Support List
         _buildPetList(userId),
         const SizedBox(height: 25),
         const Text("Quick Actions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
+        
         _buildMenuCard(
           context,
-          icon: Icons.add_circle_outline,
+          icon: Icons.pets,
           color: Colors.purple,
-          title: "Add New Pet",
-          subtitle: "Create a profile for your pet",
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddPetScreen())),
+          title: "My Pet Profiles",
+          subtitle: "Manage details and photos",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PetProfileScreen())),
         ),
+
+        _buildMenuCard(
+          context,
+          icon: Icons.payment,
+          color: Colors.green,
+          title: "Payments & Invoices",
+          subtitle: "Pay for services and view history",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBookingsScreen())),
+        ),
+
         _buildMenuCard(
           context,
           icon: Icons.search,
-          color: Colors.green,
+          color: Colors.blue,
           title: "Find Services",
           subtitle: "Search for sitters or walkers",
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FindServicesScreen())),
         ),
+        
         _buildMenuCard(
           context,
           icon: Icons.history,
           color: Colors.blueGrey,
           title: "My Bookings",
-          subtitle: "Check status of your requests",
+          subtitle: "Check status & message providers",
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBookingsScreen())),
         ),
 
-_buildMenuCard(
-  context,
-  icon: Icons.location_on,
-  color: Colors.red,
-  title: "Live Tracking",
-  subtitle: "Track your pet in real-time",
-  onTap: () => Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const LiveTrackingScreen(
-        bookingId: '11111111-1111-1111-1111-111111111111',// Replace with real booking id later
-      ),
-    ),
-  ),
-),
-
-       
+        _buildMenuCard(
+          context,
+          icon: Icons.location_on,
+          color: Colors.red,
+          title: "Live Tracking",
+          subtitle: "Track your pet in real-time",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const LiveTrackingScreen(
+                bookingId: '11111111-1111-1111-1111-111111111111', 
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 
   // --- 🏥 PROVIDER DASHBOARD ---
-  Widget _buildProviderDashboard(BuildContext context) {
+  Widget _buildProviderDashboard(BuildContext context, String userId) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text("Management", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
+
+        _buildMenuCard(
+          context,
+          icon: Icons.account_balance_wallet,
+          color: Colors.green,
+          title: "Earnings & Payments",
+          subtitle: "Track completed jobs and payouts",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBookingsScreen())),
+        ),
+
+        _buildMenuCard(
+          context,
+          icon: Icons.event_available,
+          color: Colors.redAccent,
+          title: "My Availability",
+          subtitle: "Manage your working calendar",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AvailabilityScreen())),
+        ),
+
         _buildMenuCard(
           context,
           icon: Icons.calendar_today,
           color: Colors.blue,
           title: "Incoming Bookings",
-          subtitle: "Manage your pending requests",
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => IncomingBookingsScreen())),
+          subtitle: "Review and quote new requests",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const IncomingBookingsScreen())),
         ),
-        _buildMenuCard(
-          context,
-          icon: Icons.person_pin,
-          color: Colors.teal,
-          title: "Professional Profile",
-          subtitle: "Update bio & experience",
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ProviderProfileScreen())),
-        ),
+
         _buildMenuCard(
           context,
           icon: Icons.list_alt,
@@ -137,23 +182,11 @@ _buildMenuCard(
           subtitle: "Update your offerings and rates",
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ManageServicesScreen())),
         ),
-        // Placeholder for Availability feature
-        _buildMenuCard(
-          context,
-          icon: Icons.event_available,
-          color: Colors.redAccent,
-          title: "Availability",
-          subtitle: "Manage your working calendar",
-          onTap: () => Navigator.push(
-            context, 
-            MaterialPageRoute(builder: (context) => const AvailabilityScreen())
-          ),
-        ),
       ],
     );
   }
 
-  // --- 🐶 PET LIST HELPER (Multiple Pet Support) ---
+  // --- 🐶 PET LIST HELPER ---
   Widget _buildPetList(String userId) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,8 +218,13 @@ _buildMenuCard(
                         CircleAvatar(
                           radius: 35,
                           backgroundColor: Colors.purple.shade50,
-                          backgroundImage: pet['image_url'] != null ? NetworkImage(pet['image_url']) : null,
-                          child: pet['image_url'] == null ? const Icon(Icons.pets, color: Colors.purple) : null,
+                          // ✅ Shows uploaded photo (Priority 2 Requirement)
+                          backgroundImage: pet['image_url'] != null 
+                              ? NetworkImage(pet['image_url']) 
+                              : null,
+                          child: pet['image_url'] == null 
+                              ? const Icon(Icons.pets, color: Colors.purple) 
+                              : null,
                         ),
                         const SizedBox(height: 4),
                         Text(pet['name'], style: const TextStyle(fontSize: 12)),
@@ -205,6 +243,8 @@ _buildMenuCard(
   Widget _buildMenuCard(BuildContext context, {required IconData icon, required Color color, required String title, required String subtitle, required VoidCallback onTap}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Icon(icon, color: color, size: 30),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),

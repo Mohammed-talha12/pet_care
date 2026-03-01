@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../auth/widgets/custom_text_field.dart';
 import '../../auth/widgets/primary_button.dart';
-import '../../../core/utils/image_helper.dart'; 
-
+import 'package:pet_care/features/core/utils/image_helper.dart';
 class ProviderProfileScreen extends StatefulWidget {
   const ProviderProfileScreen({super.key});
 

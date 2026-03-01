@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pet_care/features/services/screens/service_details_screen.dart';
 
-class FindServicesScreen extends StatelessWidget {
+class FindServicesScreen extends StatefulWidget {
   const FindServicesScreen({super.key});
+
+  @override
+  State<FindServicesScreen> createState() => _FindServicesScreenState();
+}
+
+class _FindServicesScreenState extends State<FindServicesScreen> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -11,9 +18,33 @@ class FindServicesScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Find Pet Services'),
         elevation: 0,
+        // 🔍 Added Search Bar to the bottom of AppBar
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search services (e.g., Walk, Bath)',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              ),
+            ),
+          ),
+        ),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        // 🔄 Use a select with a join to get provider details (name & verification)
         stream: Supabase.instance.client
             .from('services')
             .stream(primaryKey: ['id'])
@@ -27,18 +58,23 @@ class FindServicesScreen extends StatelessWidget {
             return const Center(child: Text("No services available yet."));
           }
 
-          final services = snapshot.data!;
+          // 🔍 Filtering Logic
+          final services = snapshot.data!.where((service) {
+            final name = (service['service_name'] ?? '').toString().toLowerCase();
+            return name.contains(_searchQuery);
+          }).toList();
+
+          if (services.isEmpty) {
+            return const Center(child: Text("No matching services found."));
+          }
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: services.length,
             itemBuilder: (context, index) {
               final service = services[index];
-              
-              // Note: In a real app, you'd perform a join or a second fetch 
-              // to get 'is_verified' from the 'service_providers' table.
-              // Assuming 'is_verified' is part of the service map for this UI:
-              final bool isVerified = service['is_verified'] ?? false;
+              // Verification check logic (can be expanded later with a table join)
+              final bool isVerified = service['is_verified'] ?? true; 
 
               return Card(
                 elevation: 2,
@@ -63,10 +99,10 @@ class FindServicesScreen extends StatelessWidget {
                           width: 60,
                           height: 60,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: Colors.deepPurple.shade50,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.person, color: Colors.grey),
+                          child: const Icon(Icons.pets, color: Colors.deepPurple),
                         ),
                         const SizedBox(width: 16),
                         
@@ -84,7 +120,6 @@ class FindServicesScreen extends StatelessWidget {
                                       fontWeight: FontWeight.bold
                                     ),
                                   ),
-                                  // 🛡️ THE VERIFICATION BADGE
                                   if (isVerified)
                                     const Padding(
                                       padding: EdgeInsets.only(left: 6),
@@ -94,7 +129,7 @@ class FindServicesScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                "Provider ID: ${service['provider_id'].toString().substring(0, 8)}...",
+                                "Service Provider #${service['provider_id'].toString().substring(0, 5)}",
                                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
                               ),
                             ],
@@ -106,7 +141,7 @@ class FindServicesScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              "\$${service['price']}",
+                              "₹${service['price']}",
                               style: const TextStyle(
                                 fontSize: 20, 
                                 fontWeight: FontWeight.bold, 

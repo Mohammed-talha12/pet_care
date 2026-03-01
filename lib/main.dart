@@ -1,21 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'app/themes/app_theme.dart';
 import 'features/auth/screens/login_screen.dart';
-import 'features/home/screens/home_screen.dart'; // 👈 Import your Home Screen
+import 'features/home/screens/home_screen.dart';
+import 'features/core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 1. Initialize Supabase (Simple Version)
+  // We remove 'authOptions' wrapper and use the direct parameters
   await Supabase.initialize(
     url: 'https://ttqoucjiglwthflzocpq.supabase.co', 
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0cW91Y2ppZ2x3dGhmbHpvY3BxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxNjY3MDcsImV4cCI6MjA4Nzc0MjcwN30.zXwViPZ4ctxD5MnLnqPnDsKaFafohuNvF91aZC8jcgM', 
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0cW91Y2ppZ2x3dGhmbHpvY3BxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxNjY3MDcsImV4cCI6MjA4Nzc0MjcwN30.zXwViPZ4ctxD5MnLnqPnDsKaFafohuNvF91aZC8jcgM',
+    // In many versions, you can simply omit the authOptions class 
+    // if you don't need custom deep link logic right this second.
+    // If you need the redirect, try: authCallbackUrlHostname: 'login-callback'
   );
+
+  // 2. Initialize Stripe
+  //Stripe.publishableKey = "pk_test_your_stripe_key_here"; 
+  //await Stripe.instance.applySettings();
+
+  // 3. Initialize Firebase
+  try {
+    await Firebase.initializeApp();
+    final notificationService = NotificationService();
+    await notificationService.initNotifications();
+  } catch (e) {
+    debugPrint("Firebase init failed: $e");
+  }
 
   runApp(const MyApp());
 }
 
-// Shortcut to access the Supabase client anywhere in the app
+// Global client for easy access
 final supabase = Supabase.instance.client;
 
 class MyApp extends StatelessWidget {
@@ -27,7 +48,6 @@ class MyApp extends StatelessWidget {
       title: 'Pet Care App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      // 🛡️ Logic to decide where the user starts
       home: const AuthGate(), 
     );
   }
@@ -38,17 +58,16 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔍 This checks if a valid session exists in local storage
-    final session = Supabase.instance.client.auth.currentSession;
+    return StreamBuilder<AuthState>(
+      stream: supabase.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
 
-    if (session != null) {
-      // User is already logged in, skip LoginScreen
-      return const HomeScreen(); 
-    } else {
-      // No session found, show LoginScreen
-      return const LoginScreen();
-    }
+        final session = snapshot.data?.session;
+        return session != null ? const HomeScreen() : const LoginScreen();
+      },
+    );
   }
 }
-
-
